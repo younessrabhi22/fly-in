@@ -13,5 +13,5 @@ class Connection:
         self.max_link_capacity = max_link_capacity
         self.current_drones: int = 0
 
-    def __repr__(self) -> str:
-        return f"Connection({self.name}, capacity={self.max_link_capacity}, current={self.current_drones})"
+    # def __repr__(self) -> str:
+    #     return f"Connection({self.name}, capacity={self.max_link_capacity}, current={self.current_drones})"
