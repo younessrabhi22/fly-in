@@ -6,7 +6,7 @@ class Graph:
     def __init__(self) -> None:
         self.zones: Dict[str, Zone] = {}
 
-        self.adjacency_list: Dict[str, List[Connection]] = {}
+        self.connections_map: Dict[str, List[Connection]] = {}
 
         self.start_zone: Optional[Zone] = None
         self.end_zone: Optional[Zone] = None
@@ -16,22 +16,32 @@ class Graph:
         Adds a new zone to the graph and initializes its list of neighbors.
         """
         self.zones[zone.name] = zone
-        self.adjacency_list[zone.name] = []
+        self.connections_map[zone.name] = []
 
         if is_start:
             self.start_zone = zone
         if is_end:
             self.end_zone = zone
 
+    def has_connection(self, zone1_name: str, zone2_name: str) -> bool:
+        """
+        Checks if a connection already exists between zone1 and zone2.
+        """
+        if zone1_name in self.connections_map:
+            for conn in self.connections_map[zone1_name]:
+                if conn.zone_to == zone2_name or conn.zone_from == zone2_name:
+                    return True
+        return False
+
     def add_connection(self, connection: Connection) -> None:
         """
         Adds a bidirectional connection between two zones in the graph.
         """
-        if connection.zone_from in self.adjacency_list:
-            self.adjacency_list[connection.zone_from].append(connection)
+        if connection.zone_from in self.connections_map:
+            self.connections_map[connection.zone_from].append(connection)
 
-        if connection.zone_to in self.adjacency_list:
-            self.adjacency_list[connection.zone_to].append(connection)
+        if connection.zone_to in self.connections_map:
+            self.connections_map[connection.zone_to].append(connection)
 
     def __repr__(self) -> str:
         return f"Graph(zones_count={len(self.zones)}, start={self.start_zone.name if self.start_zone else None}, end={self.end_zone.name if self.end_zone else None})"
