@@ -1,0 +1,14 @@
+# Map data based on the provided visualization
+nb_drones: 4
+
+# Zones
+start_hub: start 0 0 [color=green]
+end_hub: goal 3 0 [color=red]
+hub: zoneA 1 1 [max_drones=1 color=blue]
+hub: zoneB 1 2 [max_drones=2 color=blue]
+
+# Connections
+connection: start-zoneA
+connection: start-zoneB
+connection: zoneA-goal
+connection: zoneB-goal
