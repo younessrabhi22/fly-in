@@ -80,6 +80,9 @@ class Pathfinder:
         while priority_queue:
             turn, _, zone = heapq.heappop(priority_queue)
 
+            if turn > 10000:
+                continue
+
             if zone == goal:
                 return self._rebuild_path((turn, zone), came_from)
 
