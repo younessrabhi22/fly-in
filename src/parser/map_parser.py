@@ -95,9 +95,9 @@ class MapParser:
             print(f"Error on line {line_index}: Coordinates X and Y must be integers.")
             sys.exit(1)
 
-        if x < 0 or y < 0:
-            print(f"Error on line {line_index}: Invalid coordinates ({x}, {y}) for zone '{name}'. Coordinates must be positive or zero.")
-            sys.exit(1)
+        # if x < 0 or y < 0:
+        #     print(f"Error on line {line_index}: Invalid coordinates ({x}, {y}) for zone '{name}'. Coordinates must be positive or zero.")
+        #     sys.exit(1)
 
         for existing_zone in graph.zones.values():
             if existing_zone.x == x and existing_zone.y == y:
