@@ -67,7 +67,6 @@ class Pathfinder:
         """Whether `zone_name` should be preferred when two routes tie on cost."""
         return self.graph.zones[zone_name].zone_type == "priority"
 
-
     def find_path(self) -> Path:
 
         start = self.graph.start.name

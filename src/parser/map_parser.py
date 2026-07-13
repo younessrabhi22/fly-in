@@ -27,9 +27,6 @@ class MapParser:
             base_info, meta_str = data_str.split("[", 1)
             meta_str = meta_str.replace("]", "").strip()
 
-            while " =" in meta_str or "= " in meta_str:
-                meta_str = meta_str.replace(" =", "=").replace("= ", "=")
-
             seen_keys = set()
 
             for item in meta_str.split():
@@ -94,10 +91,6 @@ class MapParser:
         except ValueError:
             print(f"Error on line {line_index}: Coordinates X and Y must be integers.")
             sys.exit(1)
-
-        # if x < 0 or y < 0:
-        #     print(f"Error on line {line_index}: Invalid coordinates ({x}, {y}) for zone '{name}'. Coordinates must be positive or zero.")
-        #     sys.exit(1)
 
         for existing_zone in graph.zones.values():
             if existing_zone.x == x and existing_zone.y == y:
@@ -200,10 +193,7 @@ class MapParser:
                     base_info, meta_str = data_str.split("[", 1)
                     base_info = base_info.strip()
                     meta_str = meta_str.replace("]", "").strip()
-
-                    while " =" in meta_str or "= " in meta_str:
-                        meta_str = meta_str.replace(" =", "=").replace("= ", "=")
-
+                    
                     seen_keys = set()
 
                     for item in meta_str.split():

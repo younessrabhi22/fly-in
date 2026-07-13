@@ -7,7 +7,6 @@ nb_drones: 25
 
 # === LAYER 0: The Nightmare Begins ===
 start_hub: start 0 0 [color=green max_drones=25]
-
 # Single-file entry gates (extreme bottleneck)
 hub: gate_hell1 1 0 [color=red max_drones=1]
 hub: gate_hell2 2 0 [color=red max_drones=1]
