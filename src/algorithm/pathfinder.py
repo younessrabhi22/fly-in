@@ -1,5 +1,3 @@
-
-
 import heapq
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -72,12 +70,14 @@ class Pathfinder:
         start = self.graph.start.name
         goal = self.graph.end.name
 
-        priority_queue: List[Tuple[int, int, str]] = [(0, 0, start)]
+        counter = 0
+        
+        priority_queue: List[Tuple[int, int, int, int, str]] = [(0, 0, 0, counter, start)]
         visited: Set[Tuple[int, str]] = {(0, start)}
         came_from: Dict[Tuple[int, str], Optional[Tuple[int, str]]] = {(0, start): None}
 
         while priority_queue:
-            turn, _, zone = heapq.heappop(priority_queue)
+            turn, _, _, _, zone = heapq.heappop(priority_queue)
 
             if turn > 10000:
                 continue
@@ -98,8 +98,13 @@ class Pathfinder:
                 if state not in visited:
                     visited.add(state)
                     came_from[state] = (turn, zone)
+                    
                     tiebreak = 0 if self.is_priority(next_zone) else 1
-                    heapq.heappush(priority_queue, (arrival, tiebreak, next_zone))
+                    
+                    crowd_level = sum(turn_data.get(next_zone, 0) for turn_data in self.zone_reservations.values())                         
+                    counter += 1
+                    
+                    heapq.heappush(priority_queue, (arrival, tiebreak, crowd_level, counter, next_zone))
 
         return []
 
