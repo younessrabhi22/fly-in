@@ -1,9 +1,10 @@
 import math
 import pygame
 
-
 def visualize_simulation(engine):
     """Launches a Pygame window that plays the drone simulation automatically."""
+    
+    # Initialize the pygame engine
     pygame.init()
 
     zones = engine.graph.zones
@@ -12,32 +13,38 @@ def visualize_simulation(engine):
         pygame.quit()
         return
 
+    # Basic map drawing settings
     SCALE = 140
     MARGIN = 100
     ZONE_RADIUS = 18
 
+    # Find the boundaries of the map (min/max coordinates)
     min_x = min(z.x for z in zones.values())
     max_x = max(z.x for z in zones.values())
     min_y = min(z.y for z in zones.values())
     max_y = max(z.y for z in zones.values())
 
+    # Calculate total grid units
     map_units_x = max(1, max_x - min_x)
     map_units_y = max(1, max_y - min_y)
 
-
+    # Dynamically scale the map to fit the user's screen resolution
     screen_info = pygame.display.Info()
     max_width = screen_info.current_w - 100
     max_height = screen_info.current_h - 150
+    
     max_scale_x = (max_width - 2 * MARGIN) / map_units_x
     max_scale_y = (max_height - 2 * MARGIN) / map_units_y
     SCALE = max(20, int(min(SCALE, max_scale_x, max_scale_y)))
 
+    # Set the final window dimensions
     WIDTH = max(500, map_units_x * SCALE + 2 * MARGIN)
     HEIGHT = max(400, map_units_y * SCALE + 2 * MARGIN)
 
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Space-Time A* Drone Simulation")
 
+    # Define colors using RGB values
     BLACK = (0, 0, 0)
     WHITE = (255, 255, 255)
     GRAY = (100, 100, 100)
@@ -47,30 +54,34 @@ def visualize_simulation(engine):
     GREEN = (50, 200, 50)
     DRONE_COLOR = (255, 165, 0)
 
+    # Setup fonts for text and labels
     font = pygame.font.SysFont(None, 30)
-
     label_font_size = max(10, min(18, SCALE // 7))
     small_font = pygame.font.SysFont(None, label_font_size)
 
+    # Find the maximum turn reached by any drone
     max_turn = max([path[-1][0] for path in engine.all_paths.values() if path] or [0])
     current_turn = 0
 
+    # Helper function to convert logical map coordinates to screen pixels
     def get_screen_pos(zone_name):
-        """Kat7owel (x,y) dyal l'fichier l (x,y) dyal Pygame f l'écran."""
         z = zones[zone_name]
         x = int(MARGIN + (z.x - min_x) * SCALE)
         y = int(MARGIN + (z.y - min_y) * SCALE)
         return (x, y)
 
+    # Sort zones by X coordinate to stagger labels and prevent overlapping text
     zones_by_x = sorted(zones.keys(), key=lambda name: get_screen_pos(name)[0])
     stagger = {name: (i % 2) for i, name in enumerate(zones_by_x)}
 
     clock = pygame.time.Clock()
-
     running = True
-    while running:
-        clock.tick(30)
 
+    # Main visualization loop that runs every frame
+    while running:
+        clock.tick(30) # Limit frame rate to 30 FPS
+
+        # Handle user inputs (window close or keyboard arrows for time travel)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -80,9 +91,10 @@ def visualize_simulation(engine):
                 elif event.key == pygame.K_LEFT and current_turn > 0:
                     current_turn -= 1
 
+        # Clear the screen before redrawing
         screen.fill(BLACK)
 
-
+        # Draw the connections (edges) between zones
         drawn_conns = set()
         for z_name, conns in engine.graph.connections_map.items():
             pos_a = get_screen_pos(z_name)
@@ -90,14 +102,17 @@ def visualize_simulation(engine):
                 other = c.zone_to if c.zone_from == z_name else c.zone_from
                 pair = tuple(sorted([z_name, other]))
 
+                # Draw each line only once
                 if pair not in drawn_conns:
                     pos_b = get_screen_pos(other)
                     pygame.draw.line(screen, GRAY, pos_a, pos_b, 3)
                     drawn_conns.add(pair)
 
+        # Draw the zones (nodes) and their labels
         for z_name, z in zones.items():
             pos = get_screen_pos(z_name)
 
+            # Set zone color based on its type
             if z.zone_type == "restricted":
                 color = BLUE
             elif z.zone_type == "priority":
@@ -107,6 +122,7 @@ def visualize_simulation(engine):
             else:
                 color = GREEN
 
+            # Highlight the start and end hubs
             if z_name == engine.graph.start.name:
                 color = WHITE
             if z_name == engine.graph.end.name:
@@ -114,18 +130,20 @@ def visualize_simulation(engine):
 
             pygame.draw.circle(screen, color, pos, ZONE_RADIUS)
 
+            # Render the zone name label below the node
             label = small_font.render(z_name, True, WHITE)
             extra_gap = stagger[z_name] * (label_font_size + 2)
             label_y = pos[1] + ZONE_RADIUS + 4 + extra_gap
             screen.blit(label, (pos[0] - label.get_width() // 2, label_y))
 
-
+        # Group drones by their current exact screen position
         drones_by_position = {}
         for drone_id, path in engine.all_paths.items():
             location = engine.get_location_at_time(path, current_turn)
             if location is None:
                 continue
 
+            # If the drone is moving between zones, place it in the middle of the line
             if "-" in location:
                 z1, z2 = location.split("-")
                 p1, p2 = get_screen_pos(z1), get_screen_pos(z2)
@@ -135,10 +153,12 @@ def visualize_simulation(engine):
 
             drones_by_position.setdefault(pos, []).append(drone_id)
 
+        # Draw the drones on the map
         SPREAD_RADIUS = 16
         for pos, drone_ids in drones_by_position.items():
             count = len(drone_ids)
             for i, drone_id in enumerate(drone_ids):
+                # Spread multiple drones in a circle so they don't overlap completely
                 if count == 1:
                     draw_pos = pos
                 else:
@@ -152,9 +172,11 @@ def visualize_simulation(engine):
                 d_label = small_font.render(f"D{drone_id}", True, BLACK)
                 screen.blit(d_label, (draw_pos[0] - 10, draw_pos[1] - 8))
 
+        # Draw the turn counter UI at the top-left
         text = font.render(f"Turn: {current_turn} / {max_turn}", True, WHITE)
         screen.blit(text, (10, 10))
 
+        # Refresh the display to show the updated frame
         pygame.display.flip()
 
     pygame.quit()
