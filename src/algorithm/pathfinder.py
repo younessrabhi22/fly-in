@@ -14,9 +14,10 @@ class Pathfinder:
     def __init__(self, graph: Graph) -> None:
         self.graph = graph
 
+        # Tracks how many drones are in a specific zone at a specific time
         self.zone_reservations: Dict[int, Dict[str, int]] = {}
+        # Tracks how many drones are traversing a connection at a specific time
         self.connection_reservations: Dict[int, Dict[ConnectionKey, int]] = {}
-
 
     def is_zone_free(self, zone_name: str, turn: int) -> bool:
         """Can a drone be inside `zone_name` at `turn`?"""
@@ -49,7 +50,6 @@ class Pathfinder:
                 return conn
         raise ValueError(f"No connection between '{zone_a}' and '{zone_b}'")
 
-
     def get_neighbors(self, zone_name: str) -> List[str]:
         """Returns the names of zones directly reachable from `zone_name`."""
         neighbors: List[str] = []
@@ -66,30 +66,38 @@ class Pathfinder:
         return self.graph.zones[zone_name].zone_type == "priority"
 
     def find_path(self) -> Path:
-
         start = self.graph.start.name
         goal = self.graph.end.name
 
+        # Counter guarantees strict FIFO tie-breaking, avoiding string/alphabet comparison
         counter = 0
-        
+
+        # Queue format: (arrival_time, priority_tiebreak, heatmap_crowd, fifo_counter, zone_name)
         priority_queue: List[Tuple[int, int, int, int, str]] = [(0, 0, 0, counter, start)]
+
+        # Tracks visited states to prevent infinite loops (Time-Space node tracking)
         visited: Set[Tuple[int, str]] = {(0, start)}
+
+        # Stores the optimal path reconstruction map
         came_from: Dict[Tuple[int, str], Optional[Tuple[int, str]]] = {(0, start): None}
 
         while priority_queue:
             turn, _, _, _, zone = heapq.heappop(priority_queue)
 
+            # Failsafe to prevent endless wandering in highly congested maps
             if turn > 10000:
                 continue
 
             if zone == goal:
                 return self._rebuild_path((turn, zone), came_from)
 
+            # Evaluate moving to all neighbors PLUS the option to wait in the current zone
             for next_zone in self.get_neighbors(zone) + [zone]:
                 waiting = next_zone == zone
                 step_cost = 1 if waiting else self.move_cost(next_zone)
                 arrival = turn + step_cost
 
+                # Validate if capacities (zone and connection) allow this move
                 if not self._can_move(zone, next_zone, turn, arrival, waiting):
                     continue
 
@@ -98,12 +106,17 @@ class Pathfinder:
                 if state not in visited:
                     visited.add(state)
                     came_from[state] = (turn, zone)
-                    
+
+                    # Tiebreak 1: Priority zones get 0 (top of queue), normal get 1
                     tiebreak = 0 if self.is_priority(next_zone) else 1
-                    
-                    crowd_level = sum(turn_data.get(next_zone, 0) for turn_data in self.zone_reservations.values())                         
+
+                    # Tiebreak 2: Heatmap logic. Sums all historical reservations for this zone
+                    # to naturally force load balancing (Zipper effect) across the map
+                    crowd_level = sum(turn_data.get(next_zone, 0) for turn_data in self.zone_reservations.values())
+
+                    # Tiebreak 3: Strict incremental counter acts as the final decision maker
                     counter += 1
-                    
+
                     heapq.heappush(priority_queue, (arrival, tiebreak, crowd_level, counter, next_zone))
 
         return []
@@ -115,6 +128,7 @@ class Pathfinder:
         if waiting:
             return self.is_zone_free(next_zone, arrival)
 
+        # Restricted moves (2 turns) require the connection to be free on the transit turn
         if arrival - turn == 2:
             transit_turn = turn + 1
             return (
@@ -122,6 +136,7 @@ class Pathfinder:
                 and self.is_zone_free(next_zone, arrival)
             )
 
+        # Standard 1-turn move validation
         return (
             self.is_connection_free(zone, next_zone, arrival)
             and self.is_zone_free(next_zone, arrival)
