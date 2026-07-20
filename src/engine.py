@@ -26,7 +26,6 @@ class SimulationEngine:
         self.print_simulation()
         return True
 
-
     def register_path(self, path: Path) -> None:
         """Books every zone and connection this drone will use, turn by
         turn, so the next drone's search knows about the traffic."""

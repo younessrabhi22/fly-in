@@ -2,7 +2,7 @@
 nb_drones: 2
 
 # Zones
-             start_hub:    start    0    0    [color=zone]
+start_hub:start 0 0    [color=zone]
 end_hub    : goal 4 0 [color=red]
 hub: zoneA 1 1 [max_drones=1] #fghfhf
 hub: zoneB 1 2 [max_drones=2 color=blue]

@@ -36,7 +36,7 @@ def testing() -> None:
 
     engine = SimulationEngine(graph, nb_drones)
     success = engine.run()
-
+    
     if success:
         visualize_simulation(engine)
 
@@ -76,6 +76,8 @@ def parse_to_mermaid(file_path):
 def main():
 
     testing()
+
+
 
 
     if len(sys.argv) < 2:

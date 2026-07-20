@@ -7,7 +7,6 @@ from src.models.graph import Graph
 Path = List[Tuple[int, str]]
 ConnectionKey = Tuple[str, str]
 
-
 class Pathfinder:
     """Finds the fastest conflict-free space-time path for one drone."""
 
@@ -116,7 +115,6 @@ class Pathfinder:
 
                     # Tiebreak 3: Strict incremental counter acts as the final decision maker
                     counter += 1
-
                     heapq.heappush(priority_queue, (arrival, tiebreak, crowd_level, counter, next_zone))
 
         return []
