@@ -62,11 +62,12 @@ class SimulationEngine:
         for index, (turn, zone) in enumerate(path):
             if turn == target_time:
                 return zone
+
             if turn > target_time:
                 previous_zone = path[index - 1][1]
                 return f"{previous_zone}-{zone}"
-            last_zone = zone
 
+            last_zone = zone
         return last_zone
 
     def print_simulation(self) -> None:
@@ -78,7 +79,7 @@ class SimulationEngine:
 
         for current_turn in range(1, max_turn + 1):
             moves_this_turn: List[str] = []
-
+            
             for drone_id, path in self.all_paths.items():
                 previous_location = self.get_location_at_time(path, current_turn - 1)
                 current_location = self.get_location_at_time(path, current_turn)

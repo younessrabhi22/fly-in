@@ -1,5 +1,6 @@
 from typing import Optional
 
+
 class Zone:
     def __init__(
         self,
@@ -17,6 +18,3 @@ class Zone:
         self.color = color
         self.max_drones = max_drones
         self.current_drones: int = 0
-
-    def __repr__(self) -> str:
-        return f"Zone({self.name}, {self.zone_type}, max={self.max_drones}, current={self.current_drones})"
