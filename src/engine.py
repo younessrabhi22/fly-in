@@ -36,6 +36,8 @@ class SimulationEngine:
             if zone == prev_zone:
                 continue
             connection_turn = turn if turn - prev_turn == 1 else prev_turn + 1
+            if turn - prev_turn == 2:
+                self._reserve_connection(prev_zone, zone, connection_turn + 1)
             self._reserve_connection(prev_zone, zone, connection_turn)
 
     def _reserve_zone(self, zone: str, turn: int) -> None:
@@ -79,7 +81,7 @@ class SimulationEngine:
 
         for current_turn in range(1, max_turn + 1):
             moves_this_turn: List[str] = []
-            
+
             for drone_id, path in self.all_paths.items():
                 previous_location = self.get_location_at_time(path, current_turn - 1)
                 current_location = self.get_location_at_time(path, current_turn)
