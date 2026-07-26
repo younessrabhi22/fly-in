@@ -62,11 +62,12 @@ class SimulationEngine:
         for index, (turn, zone) in enumerate(path):
             if turn == target_time:
                 return zone
+            
             if turn > target_time:
                 previous_zone = path[index - 1][1]
                 return f"{previous_zone}-{zone}"
+            
             last_zone = zone
-
         return last_zone
 
     def print_simulation(self) -> None:
