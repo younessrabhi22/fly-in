@@ -87,6 +87,7 @@ class DroneVisualizer(arcade.Window):
         # Draw drones
         for drone_id, path in self.engine.all_paths.items():
             loc = self.engine.get_location_at_time(path, self.turn)
+
             if not loc: continue
 
             if "-" in loc:
@@ -97,10 +98,11 @@ class DroneVisualizer(arcade.Window):
 
             arcade.draw_circle_filled(dx, dy, 12, arcade.color.ORANGE)
             arcade.draw_text(f"D{drone_id}", dx, dy, arcade.color.BLACK, 10, anchor_x="center", anchor_y="center")
-
         # Draw turn counter
+
         arcade.draw_text(f"Turn: {self.turn} / {self.max_turn}", 20, self.height - 30, arcade.color.WHITE, 16)
 
 def visualize_simulation(engine):
     DroneVisualizer(engine)
     arcade.run()
+

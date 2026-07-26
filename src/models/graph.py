@@ -2,6 +2,7 @@ from typing import Dict, List, Optional
 from src.models.zone import Zone
 from src.models.connection import Connection
 
+
 class Graph:
     def __init__(self) -> None:
         self.zones: Dict[str, Zone] = {}
@@ -23,7 +24,9 @@ class Graph:
         assert self.end_zone is not None, "Graph has no end zone yet"
         return self.end_zone
 
-    def add_zone(self, zone: Zone, is_start: bool = False, is_end: bool = False) -> None:
+    def add_zone(
+        self, zone: Zone, is_start: bool = False, is_end: bool = False
+    ) -> None:
         """
         Adds a new zone to the graph and initializes its list of neighbors.
         """
@@ -56,5 +59,9 @@ class Graph:
             self.connections_map[connection.zone_to].append(connection)
 
     def __repr__(self) -> str:
-        return f"Graph(zones_count={len(self.zones)}, start={self.start_zone.name if self.start_zone else None}, end={self.end_zone.name if self.end_zone else None})"
-
+        start_name = self.start_zone.name if self.start_zone else None
+        end_name = self.end_zone.name if self.end_zone else None
+        return (
+            f"Graph(zones_count={len(self.zones)}, "
+            f"start={start_name}, end={end_name})"
+        )

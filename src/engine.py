@@ -36,6 +36,8 @@ class SimulationEngine:
             if zone == prev_zone:
                 continue
             connection_turn = turn if turn - prev_turn == 1 else prev_turn + 1
+            if turn - prev_turn == 2:
+                self._reserve_connection(prev_zone, zone, connection_turn + 1)
             self._reserve_connection(prev_zone, zone, connection_turn)
 
     def _reserve_zone(self, zone: str, turn: int) -> None:
@@ -62,11 +64,19 @@ class SimulationEngine:
         for index, (turn, zone) in enumerate(path):
             if turn == target_time:
                 return zone
+<<<<<<< HEAD
             
             if turn > target_time:
                 previous_zone = path[index - 1][1]
                 return f"{previous_zone}-{zone}"
             
+=======
+
+            if turn > target_time:
+                previous_zone = path[index - 1][1]
+                return f"{previous_zone}-{zone}"
+
+>>>>>>> 5a14642a4f226432ae898067cd8316ca55740c51
             last_zone = zone
         return last_zone
 
