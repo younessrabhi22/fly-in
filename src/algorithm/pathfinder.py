@@ -21,7 +21,7 @@ class Pathfinder:
 
         if zone.zone_type == "blocked":
             return False
-        if zone_name in (self.graph.start.name, self.graph.end.name):
+        if zone_name in (self.graph.start_zone.name, self.graph.end_zone.name):
             return True
 
         occupied = self.zone_reservations.get(turn, {}).get(zone_name, 0)
@@ -53,27 +53,18 @@ class Pathfinder:
             neighbors.append(conn.zone_to if conn.zone_from == zone_name else conn.zone_from)
         return neighbors
 
-    def move_cost(self, zone_name: str) -> int:
-        """Turns needed to enter `zone_name`: 2 for restricted, 1 otherwise."""
-        return 2 if self.graph.zones[zone_name].zone_type == "restricted" else 1
-
-    def is_priority(self, zone_name: str) -> bool:
-        """Whether `zone_name` should be preferred when two routes tie on cost."""
-        return self.graph.zones[zone_name].zone_type == "priority"
-
     def find_path(self) -> Path:
 
-        start = self.graph.start.name
-        goal = self.graph.end.name
-        counter = 0
-        # Queue format: (arrival_time, priority_tiebreak, heatmap_crowd, fifo_counter, zone_name)
-        priority_queue: List[Tuple[int, int, int, int, str]] = [(0, 0, 0, counter, start)]
+        start = self.graph.start_zone.name
+        goal = self.graph.end_zone.name
+
+        priority_queue: List[Tuple[int, int]] = [(0, 0, start)]
         visited: Set[Tuple[int, str]] = {(0, start)}
         came_from: Dict[Tuple[int, str], Optional[Tuple[int, str]]] = {(0, start): None}
 
         while priority_queue:
 
-            turn, _, _, _, zone = heapq.heappop(priority_queue)
+            turn, _,  zone = heapq.heappop(priority_queue)
             if turn > 10000:
                 continue
 
@@ -82,7 +73,7 @@ class Pathfinder:
 
             for next_zone in self.get_neighbors(zone) + [zone]:
                 waiting = next_zone == zone
-                step_cost = 1 if waiting else self.move_cost(next_zone)
+                step_cost = 1 if waiting else 2 if self.graph.zones[next_zone].zone_type == "restricted" else 1
                 arrival = turn + step_cost
 
                 if not self._can_move(zone, next_zone, turn, arrival, waiting):
@@ -94,11 +85,9 @@ class Pathfinder:
                     visited.add(state)
                     came_from[state] = (turn, zone)
 
-                    tiebreak = 0 if self.is_priority(next_zone) else 3 if waiting else 1
+                    tiebreak = 0 if self.graph.zones[next_zone].zone_type == "priority" else 3 if waiting else 1
 
-                    crowd_level = sum(turn_data.get(next_zone, 0) for turn_data in self.zone_reservations.values())
-                    counter += 1
-                    heapq.heappush(priority_queue, (arrival, tiebreak, crowd_level, counter, next_zone))
+                    heapq.heappush(priority_queue, (arrival, tiebreak, next_zone))
 
         return []
 

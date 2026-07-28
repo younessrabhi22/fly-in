@@ -35,11 +35,12 @@ class SimulationEngine:
         for (prev_turn, prev_zone), (turn, zone) in zip(path, path[1:]):
             if zone == prev_zone:
                 continue
-            connection_turn = turn if turn - prev_turn == 1 else prev_turn + 1
+            connection_turn = turn if turn - prev_turn == 1 else prev_turn + 2
             self._reserve_connection(prev_zone, zone, connection_turn)
 
+
     def _reserve_zone(self, zone: str, turn: int) -> None:
-        if zone in (self.graph.start.name, self.graph.end.name):
+        if zone in (self.graph.start_zone.name, self.graph.end_zone.name):
             return
 
         turn_zones = self.pathfinder.zone_reservations.setdefault(turn, {})
@@ -62,11 +63,11 @@ class SimulationEngine:
         for index, (turn, zone) in enumerate(path):
             if turn == target_time:
                 return zone
-            
+
             if turn > target_time:
                 previous_zone = path[index - 1][1]
                 return f"{previous_zone}-{zone}"
-            
+
             last_zone = zone
         return last_zone
 

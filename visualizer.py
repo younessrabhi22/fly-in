@@ -62,6 +62,8 @@ class DroneVisualizer(arcade.Window):
             self.turn += 1
         elif key == arcade.key.LEFT and self.turn > 0:
             self.turn -= 1
+        elif key == arcade.key.ESCAPE:
+            arcade.exit()
 
     def on_draw(self):
         self.clear()
@@ -105,4 +107,3 @@ class DroneVisualizer(arcade.Window):
 def visualize_simulation(engine):
     DroneVisualizer(engine)
     arcade.run()
-

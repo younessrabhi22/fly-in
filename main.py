@@ -4,22 +4,27 @@ from src.parser.map_parser import MapParser
 from src.engine import SimulationEngine
 from visualizer import visualize_simulation
 
-def main():
 
+def main() -> None:
 
-    map_path: str = None
-    try:
-        map_path = sys.argv[1]
-    except IndexError:
-        print("Error: No argument provided!")
+    if len(sys.argv) < 2:
+        print("Error: No argument provided!", file=sys.stderr)
         sys.exit(1)
+
+    map_path: str = sys.argv[1]
 
     if not os.path.isfile(map_path):
-        print(f"Error: The file '{map_path}' does not exist or is not a valid file.", file=sys.stderr)
+        print(
+            f"Error: The file '{map_path}' does not exist or is not a valid file."
+        )
         sys.exit(1)
 
-    map_parser = MapParser(map_path)
-    graph, nb_drones = map_parser.parse()
+    try:
+        map_parser = MapParser(map_path)
+        graph, nb_drones = map_parser.parse()
+    except ValueError as e:
+        print(f"{e}")
+        sys.exit(1)
 
     engine = SimulationEngine(graph, nb_drones)
     success = engine.run()

@@ -12,18 +12,6 @@ class Graph:
         self.start_zone: Optional[Zone] = None
         self.end_zone: Optional[Zone] = None
 
-    @property
-    def start(self) -> Zone:
-        """Typed access to the start zone (the parser guarantees it exists)."""
-        assert self.start_zone is not None, "Graph has no start zone yet"
-        return self.start_zone
-
-    @property
-    def end(self) -> Zone:
-        """Typed access to the end zone (the parser guarantees it exists)."""
-        assert self.end_zone is not None, "Graph has no end zone yet"
-        return self.end_zone
-
     def add_zone(
         self, zone: Zone, is_start: bool = False, is_end: bool = False
     ) -> None:
@@ -57,11 +45,3 @@ class Graph:
 
         if connection.zone_to in self.connections_map:
             self.connections_map[connection.zone_to].append(connection)
-
-    def __repr__(self) -> str:
-        start_name = self.start_zone.name if self.start_zone else None
-        end_name = self.end_zone.name if self.end_zone else None
-        return (
-            f"Graph(zones_count={len(self.zones)}, "
-            f"start={start_name}, end={end_name})"
-        )
