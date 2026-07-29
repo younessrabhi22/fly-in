@@ -1,12 +1,14 @@
-# Easy Level 1: Simple linear path
-nb_drones:3
+# The Funnel Map
+nb_drones: 4
 
 start_hub: start 0 0 [color=green]
-hub: z2 2 2 [zone=restricted]
-hub: z1 -2 -2 [color=blue zone=blocked]
+hub: room_A 1 1 [max_drones=1]
+hub: room_B 1 -1 [max_drones=1]
+hub: bottleneck 2 0 [max_drones=1]
 end_hub: goal 3 0 [color=red]
 
-connection: start-z1
-connection: start-z2
-connection: z1-goal
-connection: z2-goal
+connection: start-room_A
+connection: start-room_B
+connection: room_A-bottleneck
+connection: room_B-bottleneck
+connection: bottleneck-goal

@@ -1,6 +1,6 @@
-from src.models.graph import Graph
-from src.models.zone import Zone
-from src.models.connection import Connection
+from graph import Graph
+from zone import Zone
+from connection import Connection
 import sys
 from typing import Tuple, Dict, Any
 

@@ -1,0 +1,16 @@
+[project]
+name = "fly-in"
+version = "0.1.0"
+description = "Drone routing simulation engine and visualizer"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "arcade>=2.6.17",
+]
+
+[dependency-groups]
+dev = [
+    "flake8>=7.0.0",
+    "mypy>=1.9.0",
+    "pytest>=8.0.0",
+]

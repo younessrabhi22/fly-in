@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional
 
-from src.algorithm.pathfinder import Path, Pathfinder
-from src.models.graph import Graph
+from pathfinder import Path, Pathfinder
+from graph import Graph
 
 class SimulationEngine:
     def __init__(self, graph: Graph, nb_drones: int) -> None:

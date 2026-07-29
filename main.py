@@ -1,7 +1,7 @@
 import os
 import sys
-from src.parser.map_parser import MapParser
-from src.engine import SimulationEngine
+from map_parser import MapParser
+from engine import SimulationEngine
 from visualizer import visualize_simulation
 
 

@@ -1,6 +1,6 @@
 from typing import Dict, List, Optional
-from src.models.zone import Zone
-from src.models.connection import Connection
+from zone import Zone
+from connection import Connection
 
 
 class Graph:

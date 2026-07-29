@@ -1,10 +1,11 @@
 import heapq
 from typing import Dict, List, Optional, Set, Tuple
-from src.models.connection import Connection
-from src.models.graph import Graph
+from connection import Connection
+from graph import Graph
 
 Path = List[Tuple[int, str]]
 ConnectionKey = Tuple[str, str]
+
 
 class Pathfinder:
     """Finds the fastest conflict-free space-time path for one drone."""
@@ -17,6 +18,9 @@ class Pathfinder:
 
     def is_zone_free(self, zone_name: str, turn: int) -> bool:
         """Can a drone be inside `zone_name` at `turn`?"""
+        if not self.graph.start_zone or not self.graph.end_zone:
+            return False
+
         zone = self.graph.zones[zone_name]
 
         if zone.zone_type == "blocked":
@@ -50,21 +54,27 @@ class Pathfinder:
         """Returns the names of zones directly reachable from `zone_name`."""
         neighbors: List[str] = []
         for conn in self.graph.connections_map.get(zone_name, []):
-            neighbors.append(conn.zone_to if conn.zone_from == zone_name else conn.zone_from)
+            neighbors.append(
+                conn.zone_to if conn.zone_from == zone_name else conn.zone_from
+            )
         return neighbors
 
     def find_path(self) -> Path:
+        if not self.graph.start_zone or not self.graph.end_zone:
+            return []
 
         start = self.graph.start_zone.name
         goal = self.graph.end_zone.name
 
-        priority_queue: List[Tuple[int, int]] = [(0, 0, start)]
+        priority_queue: List[Tuple[int, int, str]] = [(0, 0, start)]
         visited: Set[Tuple[int, str]] = {(0, start)}
-        came_from: Dict[Tuple[int, str], Optional[Tuple[int, str]]] = {(0, start): None}
+        came_from: Dict[Tuple[int, str], Optional[Tuple[int, str]]] = {
+            (0, start): None
+        }
 
         while priority_queue:
+            turn, _, zone = heapq.heappop(priority_queue)
 
-            turn, _,  zone = heapq.heappop(priority_queue)
             if turn > 10000:
                 continue
 
@@ -73,7 +83,14 @@ class Pathfinder:
 
             for next_zone in self.get_neighbors(zone) + [zone]:
                 waiting = next_zone == zone
-                step_cost = 1 if waiting else 2 if self.graph.zones[next_zone].zone_type == "restricted" else 1
+
+                if waiting:
+                    step_cost = 1
+                elif self.graph.zones[next_zone].zone_type == "restricted":
+                    step_cost = 2
+                else:
+                    step_cost = 1
+
                 arrival = turn + step_cost
 
                 if not self._can_move(zone, next_zone, turn, arrival, waiting):
@@ -85,9 +102,15 @@ class Pathfinder:
                     visited.add(state)
                     came_from[state] = (turn, zone)
 
-                    tiebreak = 0 if self.graph.zones[next_zone].zone_type == "priority" else 3 if waiting else 1
-
-                    heapq.heappush(priority_queue, (arrival, tiebreak, next_zone))
+                    if self.graph.zones[next_zone].zone_type == "priority":
+                        tiebreak = 0
+                    elif waiting:
+                        tiebreak = 3
+                    else:
+                        tiebreak = 1
+                    heapq.heappush(
+                        priority_queue, (arrival, tiebreak, next_zone)
+                        )
 
         return []
 
@@ -98,7 +121,8 @@ class Pathfinder:
         if waiting:
             return self.is_zone_free(next_zone, arrival)
 
-        # Restricted moves (2 turns) require the connection to be free on the transit turn
+        # Restricted moves (2 turns) require
+        # the connection to be free on the transit turn
         if arrival - turn == 2:
             transit_turn = turn + 1
             return (
