@@ -15,7 +15,8 @@ def main() -> None:
 
     if not os.path.isfile(map_path):
         print(
-            f"Error: The file '{map_path}' does not exist or is not a valid file."
+            f"Error: The file '{map_path}' "
+            f"does not exist or is not a valid file."
         )
         sys.exit(1)
 

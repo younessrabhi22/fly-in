@@ -82,6 +82,7 @@ class Pathfinder:
                 return self._rebuild_path((turn, zone), came_from)
 
             for next_zone in self.get_neighbors(zone) + [zone]:
+
                 waiting = next_zone == zone
 
                 if waiting:
@@ -99,6 +100,7 @@ class Pathfinder:
                 state = (arrival, next_zone)
 
                 if state not in visited:
+
                     visited.add(state)
                     came_from[state] = (turn, zone)
 
