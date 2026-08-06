@@ -1,0 +1,13 @@
+# Showcase Map: Designed for README mid-transit screenshot
+nb_drones: 3
+
+start_hub: start 1 3 [color=green max_drones=3]
+hub: west_hub 3 3 [color=yellow max_drones=2]
+hub: corridor 5 3 [color=blue zone=restricted max_drones=1]
+hub: east_hub 7 3 [color=yellow max_drones=2]
+end_hub: goal 9 3 [color=red max_drones=3]
+
+connection: start-west_hub [max_link_capacity=2]
+connection: west_hub-corridor [max_link_capacity=1]
+connection: corridor-east_hub [max_link_capacity=1]
+connection: east_hub-goal [max_link_capacity=2]

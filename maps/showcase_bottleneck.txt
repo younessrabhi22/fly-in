@@ -1,0 +1,14 @@
+# Showcase Map: Designed for README bottleneck resolution screenshot
+nb_drones: 4
+
+start_hub: start 1 4 [color=green max_drones=4]
+hub: staging_a 3 5 [color=white max_drones=2]
+hub: staging_b 3 3 [color=white max_drones=2]
+hub: chokepoint 5 4 [color=orange max_drones=1]
+end_hub: goal 8 4 [color=red max_drones=4]
+
+connection: start-staging_a
+connection: start-staging_b
+connection: staging_a-chokepoint [max_link_capacity=1]
+connection: staging_b-chokepoint [max_link_capacity=1]
+connection: chokepoint-goal [max_link_capacity=2]
