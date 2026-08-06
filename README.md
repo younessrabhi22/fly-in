@@ -1,144 +1,162 @@
-*This project has been created as part of the 42 curriculum by yrabhi.*
-
 # Fly-in — Space-Time Drone Routing Simulation
 
-## Description
+> A high-performance, object-oriented Multi-Agent Pathfinding (MAPF) simulation engine and visualizer built from scratch in Python.
 
-Fly-in is a drone routing and simulation system that moves a fleet of drones
-from a shared start zone to a shared end zone across a network of connected
-zones, in the fewest possible simulation turns.
+---
 
-The map (zones, connections, zone types, and capacities) is loaded from a
-custom text format. Each drone is routed independently through a space-time
-pathfinding search that treats capacity constraints (zone occupancy, link
-capacity, restricted-zone transit time) as first-class rules, not
-after-the-fact checks — so the resulting schedule never violates them. The
-simulation is fully object-oriented, statically typed, and does not rely on
-any third-party graph library (no `networkx`, no `graphlib`): the graph,
-search, and reservation logic are all implemented from scratch.
+## Overview
 
-A Pygame-based visual interface plays the simulation back turn by turn, so
-the routing decisions can be inspected visually instead of only as raw
-`D<id>-<zone>` output lines.
+**Fly-in** is a cooperative pathfinding and simulation system designed to route a fleet of drones from a shared start hub to a destination hub across a network of constrained zones—minimizing total simulation turns while guaranteeing **zero collisions**.
 
-## Instructions
+Unlike traditional static routing, Fly-in treats **time as a first-class search dimension**. Using a custom **Space-Time Dijkstra** algorithm, the engine searches over `(turn, zone)` states rather than simple spatial graphs, dynamically reserving zones and connections only for the exact turns they are occupied.
 
-**Requirements:** Python 3.10+, Pygame.
+### Key Engineering Highlights
+* **Space-Time Dijkstra Search:** Elevates standard shortest-path routing into a 3D state space `(cost, turn, zone)` to handle dynamic waiting, multi-turn transits, and bottleneck avoidance.
+* **Zero External Graph Dependencies:** Fully custom Graph, Edge, and Node implementations built from scratch (no `networkx`, `graphlib`, or external routing libraries).
+* **100% Statically Typed & OOP:** Strictly typed Python 3.10+ codebase passing full `mypy` and `flake8` compliance.
+* **Cooperative MAPF Engine:** Uses space-time reservation tables to resolve multi-agent bottlenecks without global state explosion.
+* **Hardware-Accelerated Visualization:** Interactive, step-by-step graphical playback built with **Python Arcade**.
 
-```bash
-make install   # installs dependencies (pygame)
-make run       # runs the simulation on a sample map
-make debug     # runs the simulation under pdb
-make lint      # runs flake8 and mypy
-make clean     # removes __pycache__ / .mypy_cache
+---
+
+## Visual Showcase & Algorithm Playback
+
+The simulation includes an interactive GUI built with [Python Arcade](https://api.arcade.academy/) to inspect routing decisions, bottlenecks, and multi-turn transit states.
+
+### 1. Map Topology & Initial Fleet Setup
+![Map Setup](docs/images/01_map_setup.png)
+
+### 2. Space-Time Transit & Collision Avoidance
+![Mid-Transit Routing](docs/images/02_transit_routing.png)
+
+### 3. Bottleneck Resolution & Goal Arrival
+![Bottleneck Resolution](docs/images/03_bottleneck_resolution.png)
+
+#### Visualizer Controls
+* **`RIGHT Arrow`**: Advance simulation by one turn.
+* **`LEFT Arrow`**: Step backward by one turn.
+* **`ESC`**: Close the visualizer window.
+
+---
+
+## Core Architecture & Algorithm Strategy
+
+```
++-----------------------------------------------------------------+
+|                         MAP PARSER                              |
+|   Ingests custom map syntax -> Validates topology & capacities  |
++--------------------------------+--------------------------------+
+                                   |
+                                   v
++-----------------------------------------------------------------+
+|                       CUSTOM GRAPH MODEL                        |
+|        Nodes (Zones: Normal, Priority, Restricted, Blocked)     |
+|        Edges (Connections with custom max_link_capacity)        |
++--------------------------------+--------------------------------+
+                                   |
+                                   v
++-----------------------------------------------------------------+
+|                       SIMULATION ENGINE                         |
+|   Sequential Multi-Agent Routing via Shared Reservation Tables  |
++--------------------------------+--------------------------------+
+                                   |
+                                   v
++-----------------------------------------------------------------+
+|                      SPACE-TIME PATHFINDER                      |
+|      Dijkstra / A* Search over (Turn, Zone) State-Space         |
++-----------------------------------------------------------------+
 ```
 
-Or directly, without the Makefile:
+### 1. Custom Graph & Strict Parsing (`map_parser.py`, `graph.py`)
+The parser reads custom `.txt` map definitions, enforcing validation rules (unique identifiers, positive integer capacities, valid zone metadata, and bidirectional edge mapping). Malformed lines fail fast with descriptive syntax error logging.
 
+### 2. Space-Time Pathfinding (`pathfinder.py`)
+Standard Dijkstra's algorithm finds the shortest path in a static 2D graph. Fly-in elevates the search state to `(turn, zone_name)`.
+* **State Expansion:** From any current state `(t, u)`, a drone can:
+  1. **Move** to an adjacent zone `v` at `t + cost` (where restricted zones cost 2 turns).
+  2. **Wait** in place at `(t + 1, u)` if a downstream connection is congested.
+* **Dynamic Validation:** A move is only valid if both the target zone capacity (`max_drones`) and the connecting edge capacity (`max_link_capacity`) are free at the exact arrival and transit turns.
+
+### 3. Cooperative Multi-Agent Scheduling (`engine.py`)
+To route N agents without exponentially scaling the search space O(V^N), Fly-in uses **Sequential Reservation Tables**:
+1. Drones are planned sequentially based on priority.
+2. Once a valid route is found, every `(turn, zone)` and `(turn, connection)` traversed is permanently committed to a global reservation table.
+3. Subsequent drones pathfind against these committed reservations, turning an NP-Hard multi-agent problem into a fast sequence of single-agent Dijkstra searches.
+
+### 4. Heuristics & Tie-Breaking
+When multiple paths yield the same turn arrival cost, ties are broken systematically:
+1. **Priority Zones:** Preferred over normal zones per subject specifications.
+2. **Load Balancing:** Prefers zones with lower historical occupancy to prevent artificial corridor funnels.
+3. **Deterministic Order:** Monotonic insertion ordering guarantees reproducible simulation runs across different OS environments.
+
+---
+
+## Installation & Quick Start
+
+### Prerequisites
+* **Python 3.10+**
+* [uv](https://github.com/astral-sh/uv) (Recommended) or standard `pip`
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/younessrabhi22/fly-in.git
+cd fly-in
+```
+
+### 2. Run with Makefile (Recommended)
+```bash
+# Install required dependencies (Arcade, etc.)
+make install
+
+# Run simulation on an easy test map
+make run MAP=maps/easy/02_simple_fork.txt
+
+# Run static type checking and linter
+make lint
+
+# Clean cache directories
+make clean
+```
+
+### 3. Manual Execution via CLI
+If you prefer running directly via Python:
 ```bash
 pip install -r requirements.txt
-python3 main.py maps/easy/01_linear_path.txt
+python3 main.py maps/medium/01_priority_puzzle.txt
 ```
 
-Any map file that follows the format described in the subject (`nb_drones`,
-`start_hub`, `end_hub`, `hub`, `connection` lines) can be passed as the
-argument. Sample maps of increasing difficulty are provided under `maps/`.
+---
 
-Once the simulation finishes computing every drone's route, a window opens
-showing the map and the drones' positions turn by turn — see
-[Visual Representation](#visual-representation) below for the controls.
+## Map Format Specification
 
-## Algorithm Choices and Implementation Strategy
+Map files use a human-readable syntax defining fleet size, hub nodes, standard zones, and network connections:
 
-**Parsing.** `MapParser` reads the map file line by line, validates every
-zone, connection, and metadata block against the rules in the subject
-(unique names, no dashes, positive integer capacities, valid zone types,
-no duplicate connections, etc.), and builds a `Graph` of `Zone` and
-`Connection` objects. Any malformed line stops the program with a message
-naming the line and the exact problem.
+```text
+# Easy Level 2: Simple fork with two paths
+nb_drones: 4
 
-**Pathfinding.** Each drone's route is computed by `Pathfinder.find_path()`,
-a Dijkstra-style search over *(turn, zone)* states rather than zones alone.
-Searching over time as well as space is what makes it possible to treat a
-zone or connection as "busy" only during the specific turns it's actually
-occupied, instead of for the whole simulation — which is what lets several
-drones share the same map without colliding.
+start_hub: start 0 0 [color=green]
+hub: junction 1 0 [color=yellow max_drones=2]
+hub: path_a 2 1 [color=blue zone=restricted]
+hub: path_b 2 -1 [color=blue]
+end_hub: goal 3 0 [color=red]
 
-At every state, the search considers three kinds of moves: moving to a
-neighboring zone, waiting in place, and (for restricted zones specifically)
-a two-turn move during which the drone is "in transit" on the connection
-and cannot be redirected or made to wait. Every candidate move is checked
-against the zone's remaining capacity and the connection's remaining
-capacity at the exact turn(s) it would use them, before it's added to the
-search frontier.
+connection: start-junction [max_link_capacity=2]
+connection: junction-path_a
+connection: junction-path_b
+connection: path_a-goal
+connection: path_b-goal
+```
 
-Ties between equally-fast routes are broken by: (1) preferring priority
-zones, as required by the subject; (2) a load-balancing heuristic that
-prefers less-crowded zones, to spread drones across alternative paths
-instead of funneling them through the same corridor; and (3) a strict
-insertion-order counter as a final tiebreaker, so the search never depends
-on incidental string/hash ordering.
+---
 
-**Multi-drone scheduling.** `SimulationEngine` plans drones one at a time,
-in order. After each drone's path is found, every zone and connection it
-will use — turn by turn — is booked into a shared reservation table before
-the next drone searches. This turns "route N drones at once without
-collisions" into a sequence of N single-drone searches, each aware of the
-traffic already committed by the ones before it, which keeps the algorithm
-simple to reason about while still respecting every capacity constraint
-from the subject.
+## Technical Resources & References
 
-**Complexity.** Each single-drone search is a standard Dijkstra over
-*(turn, zone)* states: `O(E log V)` in the size of the expanded space-time
-graph, where the number of turns explored is bounded by a safety cap to
-avoid runaway searches on unsolvable or heavily congested maps. Paths are
-computed once per drone and not recomputed afterward — the reservation
-tables are the only state carried between drones, so memory usage grows
-with the number of turns and zones actually reserved, not with the number
-of drones squared.
+**Python Arcade Graphics**
+* [Python Arcade Library Official Documentation](https://api.arcade.academy/) — Modern, Pythonic 2D rendering library used for GPU-accelerated graphics, windowing, and custom shape drawing.
+* Arcade Drawing Primitives & Shape Lists — Best practices for batch-rendering circles and connecting lines efficiently without immediate-mode OpenGL slowdowns.
 
-## Visual Representation
-
-The `visualizer.py` module opens a Pygame window once every drone's route
-has been computed, and renders:
-
-- every zone as a circle, colored by its type (normal, restricted,
-  priority, blocked), with the start zone in white and the end zone in red;
-- every connection as a line between the zones it links;
-- every drone as a small marker, positioned at its zone for a given turn,
-  or at the midpoint of a connection while it is mid-transit through a
-  restricted zone; drones sharing the same zone at the same turn are
-  spread out in a small circle instead of overlapping, so none of them are
-  hidden.
-
-The window title bar shows the current turn out of the total. Playback is
-controlled with the arrow keys: **RIGHT** advances one turn, **LEFT** goes
-back one turn — this makes it possible to step through a specific conflict
-or bottleneck at your own pace, which is more useful for inspecting a
-routing decision than a fixed-speed autoplay would be. The window also
-auto-scales the map to fit the screen, so the same code renders both a
-6-zone easy map and the 40+-zone challenger map legibly.
-
-## Resources
-
-- Python `heapq` documentation — used for the priority queue in the
-  pathfinding search.
-- Python `typing` and `mypy` documentation — used to keep the project
-  fully typed per the subject's constraints.
-- Pygame documentation — used for the visual representation window,
-  drawing primitives, and event/keyboard handling.
-- Classic references on Dijkstra's algorithm and space-time / "cooperative
-  pathfinding" search, used as background for treating time as part of the
-  search state when routing multiple agents.
-
-**AI usage:** AI assistance (Claude) was used throughout this project for:
-reviewing and debugging the pathfinding and reservation logic (in
-particular, catching a connection-capacity bug where the connection
-capacity was checked and reserved on mismatched turns); discussing design
-tradeoffs between simplicity and strict subject compliance for the
-space-time search; iterating on the Pygame visualizer (auto-scaling to the
-screen, spreading overlapping drones, fixing zone-label overlap); and
-cleaning up `flake8`/`mypy` violations across the codebase without changing
-program logic, which was verified by regression-testing every provided map
-and several hand-written edge-case maps before and after each change. All
-AI-suggested code was reviewed, tested, and understood before being kept.
+**Algorithmic Foundations (Space-Time A* & MAPF)**
+* Cooperative Pathfinding (David Silver, 2005) — The foundational AI paper detailing Space-Time A* search and hierarchical reservation tables for multi-agent collision avoidance.
+* Red Blob Games: Introduction to A* and Dijkstra's Algorithm — The industry-standard visual guide for graph representation, priority queues, and heuristic pathfinding.
+* Multi-Agent Pathfinding (MAPF) Overview — Curated benchmarks, complexity analyses, and modern algorithm classifications for cooperative robotics routing.
